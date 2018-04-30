@@ -801,7 +801,7 @@ class DetectionLayer(KE.Layer):
         m = parse_image_meta_graph(image_meta)
         image_shape = m['image_shape'][0]
         window = norm_boxes_graph(m['window'], image_shape[:2])
-        
+
         # Run detection refinement graph on each item in the batch
         detections_batch = utils.batch_slice(
             [rois, mrcnn_class, mrcnn_bbox, window],
@@ -1839,7 +1839,7 @@ class MaskRCNN():
 
         # Inputs
         input_image = KL.Input(
-            shape=[None, None, 3], name="input_image")
+            shape=[None, None, config.IMAGE_SHAPE[2]], name="input_image")
         input_image_meta = KL.Input(shape=[config.IMAGE_META_SIZE],
                                     name="input_image_meta")
         if mode == "training":
@@ -1879,8 +1879,17 @@ class MaskRCNN():
         # Bottom-up Layers
         # Returns a list of the last layers of each stage, 5 in total.
         # Don't create the thead (stage 5), so we pick the 4th item in the list.
-        _, C2, C3, C4, C5 = resnet_graph(input_image, config.BACKBONE,
+        _, C2, C3, C4, C5 = resnet_graph(input_image[:, :, :, :3], config.BACKBONE,
                                          stage5=True, train_bn=config.TRAIN_BN)
+
+        if config.DEPTH_MODE == "before_rpn":
+            _, DC2, DC3, DC4, DC5 = resnet_graph(input_image[:, :, :, 3:], config.DEPTH_BACKBONE,
+                                             stage5=True, train_bn=config.TRAIN_BN)
+            C2 = KL.concatenate(C2, DC2)
+            C3 = KL.concatenate(C3, DC3)
+            C4 = KL.concatenate(C4, DC4)
+            C5 = KL.concatenate(C5, DC5)
+
         # Top-down Layers
         # TODO: add assert to varify feature map sizes match what's in config
         P5 = KL.Conv2D(256, (1, 1), name='fpn_c5p5')(C5)

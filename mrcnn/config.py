@@ -190,16 +190,26 @@ class Config(object):
     # Gradient norm clipping
     GRADIENT_CLIP_NORM = 5.0
 
+    # Depth
+    # Depth mode:
+    # none: vanilla MaskRCNN
+    # before_rpn:
+    # after_rpn:
+    DEPTH_MODE = "none"
+    DEPTH_CHANNELS = 0
+    DEPTH_BACKBONE = "resnet101"
+
     def __init__(self):
         """Set values of computed attributes."""
         # Effective batch size
         self.BATCH_SIZE = self.IMAGES_PER_GPU * self.GPU_COUNT
 
         # Input image size
+        channels = 3 + self.DEPTH_CHANNELS
         if self.IMAGE_RESIZE_MODE == "crop":
-            self.IMAGE_SHAPE = np.array([self.IMAGE_MIN_DIM, self.IMAGE_MIN_DIM, 3])
+            self.IMAGE_SHAPE = np.array([self.IMAGE_MIN_DIM, self.IMAGE_MIN_DIM, channels])
         else:
-            self.IMAGE_SHAPE = np.array([self.IMAGE_MAX_DIM, self.IMAGE_MAX_DIM, 3])
+            self.IMAGE_SHAPE = np.array([self.IMAGE_MAX_DIM, self.IMAGE_MAX_DIM, channels])
 
         # Image meta data length
         # See compose_image_meta() for details
