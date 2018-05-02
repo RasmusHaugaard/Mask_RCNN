@@ -192,17 +192,23 @@ class Config(object):
 
     # Depth
     # Depth mode:
-    # none: vanilla MaskRCNN
-    # before_rpn:
-    # after_rpn:
+    #   none: vanilla MaskRCNN
+    #   before_rpn
     DEPTH_MODE = "none"
     DEPTH_CHANNELS = 0
-    DEPTH_BACKBONE = "resnet101"
+    DEPTH_BACKBONE = "resnet50"
+    DEPTH_MEAN_PIXEL = None
+    DEPTH_TRAIN_BN = None
 
     def __init__(self):
         """Set values of computed attributes."""
         # Effective batch size
         self.BATCH_SIZE = self.IMAGES_PER_GPU * self.GPU_COUNT
+
+        # concat mean pixel and depth mean pixel
+        if self.DEPTH_MEAN_PIXEL is None:
+            self.DEPTH_MEAN_PIXEL = np.zeros(self.DEPTH_CHANNELS)
+        self.MEAN_PIXEL = np.concatenate((self.MEAN_PIXEL, self.DEPTH_MEAN_PIXEL))
 
         # Input image size
         channels = 3 + self.DEPTH_CHANNELS

@@ -1879,16 +1879,18 @@ class MaskRCNN():
         # Bottom-up Layers
         # Returns a list of the last layers of each stage, 5 in total.
         # Don't create the thead (stage 5), so we pick the 4th item in the list.
+
         _, C2, C3, C4, C5 = resnet_graph(input_image[:, :, :, :3], config.BACKBONE,
                                          stage5=True, train_bn=config.TRAIN_BN)
 
         if config.DEPTH_MODE == "before_rpn":
-            _, DC2, DC3, DC4, DC5 = resnet_graph(input_image[:, :, :, 3:], config.DEPTH_BACKBONE,
-                                             stage5=True, train_bn=config.TRAIN_BN)
-            C2 = KL.concatenate(C2, DC2)
-            C3 = KL.concatenate(C3, DC3)
-            C4 = KL.concatenate(C4, DC4)
-            C5 = KL.concatenate(C5, DC5)
+            with K.name_scope("depth_"):
+                _, DC2, DC3, DC4, DC5 = resnet_graph(input_image[:, :, :, 3:], config.DEPTH_BACKBONE,
+                                                     stage5=True, train_bn=config.DEPTH_TRAIN_BN)
+                C2 = KL.concatenate([C2, DC2])
+                C3 = KL.concatenate([C3, DC3])
+                C4 = KL.concatenate([C4, DC4])
+                C5 = KL.concatenate([C5, DC5])
 
         # Top-down Layers
         # TODO: add assert to varify feature map sizes match what's in config
@@ -2285,6 +2287,7 @@ class MaskRCNN():
         layer_regex = {
             # all layers but the backbone
             "heads": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
+            "heads_and_depth": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(depth\_.*)",
             # From a specific Resnet stage and up
             "3+": r"(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
             "4+": r"(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
