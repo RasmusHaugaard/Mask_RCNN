@@ -84,7 +84,7 @@ class HinterstoisserDataset(utils.Dataset):
         rgb = skimage.io.imread(info['path']).astype(np.uint16)
         depth = skimage.io.imread(str(
             Path(info['path']).parent.parent / 'depth' / '{:04}.png'.format(info['id'])
-        ))
+        )).reshape((*rgb.shape[:2], 1))
         return np.concatenate((rgb, depth), axis=-1)
 
     def load_mask(self, image_id):
