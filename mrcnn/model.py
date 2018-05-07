@@ -1884,9 +1884,9 @@ class MaskRCNN():
                                          stage5=True, train_bn=config.TRAIN_BN)
 
         if config.SECONDARY_MODE == "before_rpn":
-            inp_depth = KL.Lambda(lambda x: x[:, :, :, config.IMAGE_CHANNELS:])(input_image)
-            _, DC2, DC3, DC4, DC5 = resnet_graph(inp_depth, config.DEPTH_BACKBONE, prefix='secondary_',
-                                                 stage5=True, train_bn=config.DEPTH_TRAIN_BN)
+            inp_secondary = KL.Lambda(lambda x: x[:, :, :, config.IMAGE_CHANNELS:])(input_image)
+            _, DC2, DC3, DC4, DC5 = resnet_graph(inp_secondary, config.SECONDARY_BACKBONE, prefix='secondary_',
+                                                 stage5=True, train_bn=config.SECONDARY_TRAIN_BN)
             C2 = KL.concatenate([C2, DC2])
             C3 = KL.concatenate([C3, DC3])
             C4 = KL.concatenate([C4, DC4])
