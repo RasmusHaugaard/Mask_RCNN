@@ -1879,19 +1879,18 @@ class MaskRCNN():
         # Bottom-up Layers
         # Returns a list of the last layers of each stage, 5 in total.
         # Don't create the thead (stage 5), so we pick the 4th item in the list.
-        inp = KL.Lambda(lambda x: x[:, :, :, :3])(input_image)
-        _, C2, C3, C4, C5 = resnet_graph(inp, config.BACKBONE,
+        image = KL.Lambda(lambda x: x[:, :, :, :config.IMAGE_CHANNELS])(input_image)
+        _, C2, C3, C4, C5 = resnet_graph(image, config.BACKBONE,
                                          stage5=True, train_bn=config.TRAIN_BN)
 
-        if config.DEPTH_MODE == "before_rpn":
-            with K.tf.variable_scope("depth_"):
-                inp_depth = KL.Lambda(lambda x: x[:, :, :, 3:])(input_image)
-                _, DC2, DC3, DC4, DC5 = resnet_graph(inp_depth, config.DEPTH_BACKBONE, prefix='depth_',
-                                                     stage5=True, train_bn=config.DEPTH_TRAIN_BN)
-                C2 = KL.concatenate([C2, DC2])
-                C3 = KL.concatenate([C3, DC3])
-                C4 = KL.concatenate([C4, DC4])
-                C5 = KL.concatenate([C5, DC5])
+        if config.SECONDARY_MODE == "before_rpn":
+            inp_depth = KL.Lambda(lambda x: x[:, :, :, config.IMAGE_CHANNELS:])(input_image)
+            _, DC2, DC3, DC4, DC5 = resnet_graph(inp_depth, config.DEPTH_BACKBONE, prefix='secondary_',
+                                                 stage5=True, train_bn=config.DEPTH_TRAIN_BN)
+            C2 = KL.concatenate([C2, DC2])
+            C3 = KL.concatenate([C3, DC3])
+            C4 = KL.concatenate([C4, DC4])
+            C5 = KL.concatenate([C5, DC5])
 
         # Top-down Layers
         # TODO: add assert to varify feature map sizes match what's in config
@@ -2288,7 +2287,7 @@ class MaskRCNN():
         layer_regex = {
             # all layers but the backbone
             "heads": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
-            "heads_and_depth": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(depth\_.*)",
+            "heads_and_secondary": r"(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)|(secondary\_.*)",
             # From a specific Resnet stage and up
             "3+": r"(res3.*)|(bn3.*)|(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",
             "4+": r"(res4.*)|(bn4.*)|(res5.*)|(bn5.*)|(mrcnn\_.*)|(rpn\_.*)|(fpn\_.*)",

@@ -110,6 +110,7 @@ class Config(object):
     IMAGE_RESIZE_MODE = "square"
     IMAGE_MIN_DIM = 800
     IMAGE_MAX_DIM = 1024
+    IMAGE_CHANNELS = 3
     # Minimum scaling ratio. Checked after MIN_IMAGE_DIM and can force further
     # up scaling. For example, if set to 2 then images are scaled up to double
     # the width and height, or more, even if MIN_IMAGE_DIM doesn't require it.
@@ -190,28 +191,33 @@ class Config(object):
     # Gradient norm clipping
     GRADIENT_CLIP_NORM = 5.0
 
-    # Depth
-    # Depth mode:
+    # Secondary backbone pass
+    # Mode:
     #   none: vanilla MaskRCNN
     #   before_rpn
-    DEPTH_MODE = "none"
-    DEPTH_CHANNELS = 0
-    DEPTH_BACKBONE = "resnet50"
-    DEPTH_MEAN_PIXEL = None
-    DEPTH_TRAIN_BN = None
+    #   after_rpn
+    SECONDARY_MODE = "none"
+    SECONDARY_CHANNELS = 0
+    SECONDARY_BACKBONE = "resnet50"
+    SECONDARY_MEAN_PIXEL = None
+    SECONDARY_TRAIN_BN = None
 
     def __init__(self):
         """Set values of computed attributes."""
         # Effective batch size
         self.BATCH_SIZE = self.IMAGES_PER_GPU * self.GPU_COUNT
 
-        # concat mean pixel and depth mean pixel
-        if self.DEPTH_MEAN_PIXEL is None:
-            self.DEPTH_MEAN_PIXEL = np.zeros(self.DEPTH_CHANNELS)
-        self.MEAN_PIXEL = np.concatenate((self.MEAN_PIXEL, self.DEPTH_MEAN_PIXEL))
+        # only apply default mean pixels to 3 channel image
+        if self.IMAGE_CHANNELS != 3 and len(self.MEAN_PIXEL) == 3:
+            self.MEAN_PIXEL = np.zeros(self.IMAGE_CHANNELS)
+
+        # concat mean pixel and secondary mean pixel
+        if self.SECONDARY_MEAN_PIXEL is None:
+            self.SECONDARY_MEAN_PIXEL = np.zeros(self.SECONDARY_CHANNELS)
+        self.MEAN_PIXEL = np.concatenate((self.MEAN_PIXEL, self.SECONDARY_MEAN_PIXEL))
 
         # Input image size
-        channels = 3 + self.DEPTH_CHANNELS
+        channels = self.IMAGE_CHANNELS + self.SECONDARY_CHANNELS
         if self.IMAGE_RESIZE_MODE == "crop":
             self.IMAGE_SHAPE = np.array([self.IMAGE_MIN_DIM, self.IMAGE_MIN_DIM, channels])
         else:

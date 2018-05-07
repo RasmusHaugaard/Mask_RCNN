@@ -36,8 +36,8 @@ class HinterstoisserConfig(Config):
     STEPS_PER_EPOCH = 300
     VALIDATION_STEPS = 30
 
-    DEPTH_MODE = "before_rpn"
-    DEPTH_CHANNELS = 1
+    SECONDARY_MODE = "before_rpn"
+    SECONDARY_CHANNELS = 1
 
 
 class HinterstoisserDataset(utils.Dataset):
