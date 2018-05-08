@@ -2079,7 +2079,7 @@ class MaskRCNN():
         checkpoint = os.path.join(dir_name, checkpoints[-1])
         return dir_name, checkpoint
 
-    def load_weights(self, filepath, by_name=False, exclude=None):
+    def load_weights(self, filepath, by_name=False, exclude=None, map_primary_to_secondary=False):
         """Modified version of the correspoding Keras function with
         the addition of multi-GPU support and the ability to exclude
         some layers from loading.
@@ -2102,6 +2102,16 @@ class MaskRCNN():
         keras_model = self.keras_model
         layers = keras_model.inner_model.layers if hasattr(keras_model, "inner_model")\
             else keras_model.layers
+
+        # Map primary to secondary
+        if map_primary_to_secondary:
+            o = {}
+            for key, val in f.items():
+                if key[:3] == 'res':
+                    o['secondary_' + key] = val
+                else:
+                    o[key] = val
+            f = o
 
         # Exclude some layers
         if exclude:
