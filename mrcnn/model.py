@@ -2086,6 +2086,7 @@ class MaskRCNN():
         exlude: list of layer names to excluce
         """
         import h5py
+        import re
         from keras.engine import topology
 
         if exclude:
@@ -2106,8 +2107,9 @@ class MaskRCNN():
         # Map primary to secondary
         if map_primary_to_secondary:
             o = {}
+            r = re.compile('(conv1)|(res.*)|(bn.*)')
             for key, val in f.items():
-                if key[:3] == 'res':
+                if r.fullmatch(key):
                     o['secondary_' + key] = val
                 else:
                     o[key] = val
@@ -2115,7 +2117,11 @@ class MaskRCNN():
 
         # Exclude some layers
         if exclude:
-            layers = filter(lambda l: l.name not in exclude, layers)
+            for reg in exclude:
+                r = re.compile(reg)
+                for l in layers:
+                    if r.fullmatch(l.name):
+                        layers.remove(l)
 
         if by_name:
             topology.load_weights_from_hdf5_group_by_name(f, layers)
