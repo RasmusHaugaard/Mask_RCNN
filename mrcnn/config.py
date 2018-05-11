@@ -198,9 +198,9 @@ class Config(object):
     #   after_rpn
     SECONDARY_MODE = "none"
     SECONDARY_CHANNELS = 0
-    SECONDARY_BACKBONE = "resnet50"
+    SECONDARY_BACKBONE = "resnet101"
     SECONDARY_MEAN_PIXEL = None
-    SECONDARY_TRAIN_BN = None
+    SECONDARY_TRAIN_BN = False
 
     def __init__(self):
         """Set values of computed attributes."""
